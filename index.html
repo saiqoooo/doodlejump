@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joodle Jump</title>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Conteneur principal du jeu -->
+        <div id="game-container">
+            <div id="score-value">0</div>
+            <canvas id="my_canvas"></canvas>
+            
+            <div class="button-container">
+                <button class="green-button" id="reset">Reset</button>
+            </div>
+        </div>
+
+        <div id="game-over-overlay">
+            <p>Game Over</p>
+            <p id="final-score">Score: 0</p>
+            <button class="green-button" id="overlay-reset">Reset</button>
+        </div>
+
+        <!-- Panneau de debug à droite -->
+        <div id="debug-panel">
+            <h3>Debug Info</h3>
+
+            <label>
+                <input type="checkbox" id="toggle-hitbox">
+                Afficher les hitboxes
+            </label>
+
+            <table>
+                <caption>Probabilités des plateformes</caption>
+                <tr>
+                    <th>Type</th>
+                    <th>Probabilité</th>
+                </tr>
+                <tr>
+                    <td>Verte</td>
+                    <td id="prob-green">100%</td>
+                </tr>
+                <tr>
+                    <td>Bleue</td>
+                    <td id="prob-blue">0%</td>
+                </tr>
+                <tr>
+                    <td>Blanche</td>
+                    <td id="prob-white">0%</td>
+                </tr>
+            </table>
+
+            <table>
+                <caption>Gaps des plateformes</caption>
+                <tr>
+                    <th>Type</th>
+                    <th>Valeur</th>
+                </tr>
+                <tr>
+                    <td>Min</td>
+                    <td id="gap-min">0</td>
+                </tr>
+                <tr>
+                    <td>Max</td>
+                    <td id="gap-max">0</td>
+                </tr>
+                <tr>
+                    <td>Dernier</td>
+                    <td id="gap-last">0</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script src="scripts/model.js"></script>
+    <script src="scripts/view.js"></script>
+    <script src="scripts/controller.js"></script>
+    <script>
+        let widthCanvas = 480;
+        let heightCanvas = 768;
+        const app = new Controller(new Model(widthCanvas, heightCanvas), new View(widthCanvas, heightCanvas));
+        app.Update();
+    </script>
+</body>
+</html>
