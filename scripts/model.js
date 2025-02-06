@@ -8,8 +8,8 @@ class Model {
     init() {
         this.score = 0; // Initialisation du score
         this.platforms = []; // Liste des plateformes
-        this.doodle = new Doodle(this); // Création du doodle
         this.generateInitialPlatforms(); // Génération des premières plateformes
+        this.doodle = new Doodle(this); // Création du doodle
     }
 
     generateInitialPlatforms() {
@@ -44,13 +44,29 @@ class Model {
     Move(fps) {
         if (!this.doodle.isAlive) return; // Arrête le jeu si le doodle est mort
 
-        // Calcul dynamique des espacements entre plateformes en fonction du score
-        let minGap = Math.min(30 + this.score / 20, 240); // Augmente plus vite
-        let maxGap = Math.min(120 + this.score / 30, 280); // Augmente mais plus lentement
+        // Calcul dynamique de l'espacement entre les plateformes en fonction du score
+
+        // Définit un espacement minimum qui augmente avec le score, mais est plafonné à 240
+        let minGap = Math.min(30 + this.score / 20, 240); //plus le score est élevé, plus l'écart minimum entre les plateformes augmente.
         
-        let exponent = 1 - Math.min(this.score / 250, 0.8); // Ajusté pour garder une bonne distribution
-        let gapFactor = Math.pow(Math.random(), exponent);
-        let gap = Math.floor(minGap + gapFactor * (maxGap - minGap));
+
+        // Définit un espacement maximum qui augmente aussi avec le score et est plafonné à 280
+        let maxGap = Math.min(120 + this.score / 30, 280); 
+
+        // Calcul d'un exposant pour ajuster la répartition aléatoire des espacements
+        let exponent = 1 - Math.min(this.score / 250, 0.8); 
+        // Au début (score faible), exponent est proche de 1, donc la répartition est plus uniforme.
+        // Avec un score plus élevé, exponent diminue (jusqu'à 0.2), ce qui influence la distribution de l'aléatoire.
+
+        // Génère un facteur aléatoire ajusté avec un exposant pour contrôler la distribution
+        let gapFactor = Math.pow(Math.random(), exponent); 
+        // Si `exponent` est proche de 1, `gapFactor` est distribué uniformément.
+        // Si `exponent` diminue, `gapFactor` a plus de chances d’être petit, donc les écarts deviennent plus grands en moyenne.
+
+        // Calcul final de l'espacement en appliquant le facteur aléatoire sur la plage définie entre minGap et maxGap
+        let gap = Math.ceil(minGap + gapFactor * (maxGap - minGap)); 
+        // On prend l'espacement minimum et on y ajoute une portion aléatoire de la différence entre minGap et maxGap.
+        // `Math.ceil()` permet d'obtenir un entier pour éviter des valeurs décimales.
         
     
         if (this.platforms[this.platforms.length - 1].y > gap) {
@@ -86,19 +102,19 @@ class Doodle {
     static JUMP_FORCE = 850;
     static GRAVITY = 20;
     static SPEED = 300;
-    static INITIAL_POSITION_X = 240;
-    static INITIAL_POSITION_Y = 484;
 
     constructor(model) {
         this.model = model; // Référence au modèle principal
-        this.x = Doodle.INITIAL_POSITION_X; // Position initiale X
-        this.y = Doodle.INITIAL_POSITION_Y; // Position initiale Y
         this.width = 57;
         this.height = 50;
         this.direction = 0;
         this.gravitySpeed = 0;
         this.isAlive = true;
         this.lastDirection = 1; // Dernière direction utilisée pour l'animation
+
+        // On place le doodle au dessus de la première plateforme 
+        this.x = model.platforms[0].x;
+        this.y = model.platforms[0].y - this.height*2;
     }
 
     getPosition() {
@@ -147,34 +163,43 @@ class Doodle {
     }
 
     collision() {
-        let res = null;
-        let doodleFeetLine = { x1: this.x + 16, x2: this.x + 57, y: this.y + 80 };
-
+        let res = null; // Variable pour stocker la plateforme en collision (si trouvée)
+    
+        // Définition de la "ligne des pieds" du doodle pour détecter les collisions
+        let doodleFeetLine = { 
+            x1: this.x + 16,  // Point gauche des pieds du doodle
+            x2: this.x + 57,  // Point droit des pieds du doodle
+            y: this.y + 80    // Position verticale des pieds du doodle
+        };
+    
+        // Parcours de toutes les plateformes du jeu
         this.model.platforms.forEach(platform => {
-            let platformTopLine = { x1: platform.x, x2: platform.x + platform.width, y: platform.y };
-            let platformBottomLine = { x1: platform.x, x2: platform.x + platform.width, y: platform.y + platform.height };
-
-            if (doodleFeetLine.y >= platformTopLine.y && doodleFeetLine.y <= platformBottomLine.y) {
+            // Ligne supérieure de la plateforme
+            let platformTopLine = { 
+                x1: platform.x, 
+                x2: platform.x + platform.width, 
+                y: platform.y 
+            };
+    
+    
+            // Vérifie si les pieds du doodle sont au-dessus de la plateforme et si la plateforme est à portée
+            if (doodleFeetLine.y >= platformTopLine.y  && doodleFeetLine.y <= platformTopLine.y + platform.height) {
+                // Vérifie si au moins une des extrémités des pieds du doodle est sur la plateforme
                 if ((doodleFeetLine.x1 >= platformTopLine.x1 && doodleFeetLine.x1 <= platformTopLine.x2) ||
                     (doodleFeetLine.x2 >= platformTopLine.x1 && doodleFeetLine.x2 <= platformTopLine.x2)) {
-                    res = platform;
+                    res = platform; // La collision est détectée
                 }
             }
         });
-
+    
+        // Si la plateforme détectée est de type "falling", elle commence à descendre
         if (res && res.type === "falling") {
             res.interval = setInterval(res.scrollDown.bind(res), 1000 / 60, 5);
         }
-        return res;
+    
+        return res; // Retourne la plateforme en collision ou null
     }
-
-    reset() {
-        this.x = Doodle.INITIAL_POSITION_X;
-        this.y = Doodle.INITIAL_POSITION_Y;
-        this.direction = 0;
-        this.gravitySpeed = 0;
-        this.isAlive = true;
-    }
+    
 }
 
 
